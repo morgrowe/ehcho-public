@@ -4,9 +4,12 @@
 #
 #	Last updated: 5th October 2015
 
-whoami=$(whoami)
+whoami=$(/usr/bin/whoami)
+photosAppVersion=$(/usr/bin/defaults read /Applications/Photos.app/Contents/version.plist CFBundleShortVersionString)
+
 photosContainer=/Users/$whoami/Library/Containers/com.apple.Photos
-photoDesktop=$photosContainer/Data/Library/Caches/Photos\ Desktop
+photoDesktopYos=$photosContainer/Data/Library/Caches/Photos\ Desktop
+photoDesktopElCap=$photosContainer/Data/Library/Application\ Support/Photos\ Desktop
 photosDesktopCheck=$photosContainer/.DisabledSetDesktopPicture
 
 chmod=/bin/chmod
@@ -18,28 +21,32 @@ touch=/usr/bin/touch
 
 # Has this script run before? If no, continue, if yes, exit
 if [ ! -f "$photosDesktopCheck" ]; then
+	
+	# What version of photos is installed? El Cap and Yosemite are different
+	if [[ "$photosAppVersion" == "1.2"* ]]; then
+		
+		photoDesktop=$photoDesktopElCap
+	else
 
-	# Has the application created its container yet? If yes, move on
+		photoDesktop=$photoDesktopYos
+
+	fi
+
+	# Has Photos run yet?
 	if [ -d "$photosContainer" ]; then
 
-		# Is there already a Photos Desktop folder? If yes, change its permissions,
-		# if no, make it and change its permissions
+		# Has the container for the wallpaper graphics been created?
 		if [ -d "$photoDesktop" ]; then
 
-			# Deny all access
+			# If so, nuke it
 			$chmod 000 "$photoDesktop"
-
-			# Create marker
 			$touch "$photosDesktopCheck"
-
 
 		else
 
-			# Make the directory and deny all access
+			# If not, make it and then nuke it
 			$mkdir "$photoDesktop"
 			$chmod 000 "$photoDesktop"
-
-			# Create marker
 			$touch "$photosDesktopCheck"
 
 		fi
